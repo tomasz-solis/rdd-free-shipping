@@ -27,11 +27,6 @@ wheels/
 .ipynb_checkpoints
 *.ipynb_checkpoints
 
-# Data files (keep structure, ignore large files)
-*.csv
-*.parquet
-*.pkl
-*.pickle
 
 # IDE
 .vscode/
