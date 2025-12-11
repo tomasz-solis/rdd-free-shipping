@@ -22,38 +22,7 @@ def generate_rdd_ecommerce_data(
     treatment_effect: float = 0.08,
     random_seed: int = 42
 ) -> pd.DataFrame:
-    """
-    Generate synthetic e-commerce shopping session data for RDD analysis.
-    
-    Parameters
-    ----------
-    n_sessions : int
-        Number of shopping sessions to generate
-    cutoff : float
-        Cart value threshold for free shipping (in euros)
-    shipping_cost : float
-        Standard shipping fee for carts below threshold (in euros)
-    treatment_effect : float
-        True causal effect of free shipping on purchase completion probability
-    random_seed : int
-        Random seed for reproducibility
-        
-    Returns
-    -------
-    pd.DataFrame
-        Generated shopping session data with columns:
-        - session_id: Unique identifier
-        - customer_age: Age category
-        - account_tenure_days: Days since account creation
-        - previous_purchases: Number of prior completed purchases
-        - product_category: Primary category in cart
-        - items_in_cart: Number of items
-        - cart_value: Pre-shipping cart value in euros (running variable)
-        - treatment: Binary indicator (1 = free shipping, 0 = paid shipping)
-        - completed_purchase: Binary outcome (1 = purchased, 0 = abandoned)
-        - Y0: Potential outcome without free shipping (for validation)
-        - Y1: Potential outcome with free shipping (for validation)
-    """
+    """Generate synthetic e-commerce sessions with sharp RDD at cutoff threshold."""
     np.random.seed(random_seed)
     
     # Generate customer demographics
@@ -175,20 +144,17 @@ if __name__ == '__main__':
     )
     
     # Print summary statistics
-    print("Dataset generated successfully")
-    print(f"\nShape: {df.shape}")
-    print(f"\nTreatment distribution:")
-    print(df['treatment'].value_counts())
-    print(f"\nPurchase completion by treatment:")
-    print(df.groupby('treatment')['completed_purchase'].agg(['mean', 'count']))
-    print(f"\nCart value summary:")
-    print(df['cart_value'].describe())
-    print(f"\nDensity around threshold (€45-55):")
+    print(f"Generated {df.shape[0]:,} sessions with {df.shape[1]} columns")
+    print(f"Treatment split: {(df['treatment']==1).sum():,} treated, {(df['treatment']==0).sum():,} control")
+    
+    completion_rates = df.groupby('treatment')['completed_purchase'].mean()
+    print(f"Completion rates: {completion_rates[0]:.1%} control, {completion_rates[1]:.1%} treated")
+    print(f"Cart value range: €{df['cart_value'].min():.0f}-€{df['cart_value'].max():.0f}")
+    
     threshold_window = df[(df['cart_value'] >= 45) & (df['cart_value'] <= 55)]
-    print(f"Sessions in window: {len(threshold_window)}")
-    print(f"Average cart value: €{threshold_window['cart_value'].mean():.2f}")
+    print(f"Sessions near threshold (€45-55): {len(threshold_window):,}")
     
     # Save to CSV
     output_path = '../data/rdd_ecommerce.csv'
     df.to_csv(output_path, index=False)
-    print(f"\nData saved to {output_path}")
+    print(f"Saved to {output_path}")
